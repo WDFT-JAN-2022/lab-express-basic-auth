@@ -1,4 +1,7 @@
 const router = require("express").Router();
+const userLogged = require('../middleware/userLogged');
+const bcrypt = require('bcryptjs');
+const User = require('../models/User.model');
 
 /* GET home page */
 router.get("/", (req, res, next) => {
@@ -24,6 +27,7 @@ router.post("/signup", function (req, res) {
     res.render("signup", errors);
   }
 
+  const saltRounds = 10;
   const salt = bcrypt.genSaltSync(saltRounds);
   const hashedPass = bcrypt.hashSync(req.body.password, salt);
 
@@ -33,7 +37,7 @@ router.post("/signup", function (req, res) {
   })
     .then((createdUser) => {
       console.log("user was created woo!!", createdUser);
-      res.render("profile");
+      res.render("userPages/main");
       // Add session
       console.log(req.session);
       req.session.user = createdUser;
@@ -67,5 +71,21 @@ router.post("/login", (req, res) => {
     }
   });
 });
+
+// Logout / End Session
+router.get('/logout', (req, res) => {
+  req.session.destroy()
+  res.redirect('/login')
+})
+
+// Once Logged in, User can access these routes
+router.get('/main', userLogged, (req, res) => {
+  res.render('userPages/main');
+})
+
+router.get('/private', userLogged, (req, res) => {
+  res.render('userPages/private')
+})
+
 
 module.exports = router;
